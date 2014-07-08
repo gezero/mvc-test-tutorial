@@ -7,4 +7,6 @@ import com.barcap.tutorial.entities.Account;
  */
 public interface AccountService {
     Account findOne(Long id);
+
+    Account createAccount(Account account);
 }
