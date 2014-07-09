@@ -4,10 +4,7 @@ import com.barcap.tutorial.entities.Account;
 import com.barcap.tutorial.services.AccountService;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -24,6 +21,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * This tests shows how mockMVC, jsonPath and Mockito integrate well together.
+ *
+ * Among other things note that password is serialized only on the way from client to server when registering new
+ * account. Password is not serialized when information about account are requested.
+ *
+ * Note how we check that the password is properly serialized when registering new account by capturing the data passed
+ * to the mocked AccountService using the captor entity.
+ */
 public class AccountControllerTest {
 
     @InjectMocks
@@ -33,16 +39,19 @@ public class AccountControllerTest {
     @Mock
     AccountService service;
 
+    @Captor
     ArgumentCaptor<Account> captor;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-        captor = ArgumentCaptor.forClass(Account.class);
     }
 
 
+    /**
+     * Among other things this test tests, that the password is not serialized on the way from server to client
+     */
     @Test
     public void testGetExistingAccount() throws Exception {
         Account account = new Account();
@@ -57,7 +66,7 @@ public class AccountControllerTest {
         mockMvc.perform(get("/accounts/1"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.password",is(nullValue())))
+                .andExpect(jsonPath("$.password", is(nullValue())))
                 .andExpect(jsonPath("$.id", is(1)));
     }
 
@@ -70,8 +79,11 @@ public class AccountControllerTest {
     }
 
 
+    /**
+     * Among other things this test tests that the password is properly serialized from the input JSON object.
+     */
     @Test
-    public void testRegisterAccount() throws Exception {
+    public void testCreateNewAccount() throws Exception {
         Account account = new Account();
         account.setId(1L);
         account.setUserName("username");
@@ -84,14 +96,13 @@ public class AccountControllerTest {
         mockMvc.perform(post("/accounts")
                         .content("{\"id\":1,\"userName\":\"username\",\"password\":\"password\"}")
                         .contentType(MediaType.APPLICATION_JSON)
-                ).andDo(print())
+        ).andDo(print())
                 .andExpect(status().isOk());
 
-//        verify(service).createAccount(any(Account.class));
         verify(service).createAccount(captor.capture());
 
-        assertThat(captor.getValue().getUserName(),is("username"));
-        assertThat(captor.getValue().getPassword(),is("password"));
+        assertThat(captor.getValue().getUserName(), is("username"));
+        assertThat(captor.getValue().getPassword(), is("password"));
 
 
     }

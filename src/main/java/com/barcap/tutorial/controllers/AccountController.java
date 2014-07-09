@@ -19,21 +19,29 @@ public class AccountController {
         this.service = service;
     }
 
+    /**
+     * This method is responsible for retrieving information about account.
+     */
     @RequestMapping("{accountId}")
     public
     @ResponseBody
     Account getAccount(@PathVariable Long accountId) {
 
         Account account = service.findOne(accountId);
-        if (account!= null) {
+        if (account != null) {
             return account;
         }
         throw new NotFoundException();
     }
 
 
-    @RequestMapping(value = "",method = RequestMethod.POST)
-    public @ResponseBody Account storeAccount(@RequestBody Account account){
+    /**
+     * This method is responsible for creating new account
+     */
+    @RequestMapping(value = "", method = RequestMethod.POST)
+    public
+    @ResponseBody
+    Account createNewAccount(@RequestBody Account account) {
         return service.createAccount(account);
     }
 }
